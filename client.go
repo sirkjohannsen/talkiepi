@@ -86,9 +86,6 @@ func (b *Talkiepi) TransmitStart() {
 
 	b.IsTransmitting = true
 
-	// turn on our transmit LED
-	b.LEDOn(b.TransmitLED)
-
 	b.Stream.StartSource()
 }
 
@@ -98,8 +95,6 @@ func (b *Talkiepi) TransmitStop() {
 	}
 
 	b.Stream.StopSource()
-
-	b.LEDOff(b.TransmitLED)
 
 	b.IsTransmitting = false
 }
@@ -134,8 +129,6 @@ func (b *Talkiepi) OnDisconnect(e *gumble.DisconnectEvent) {
 
 	// turn off our LEDs
 	b.LEDOff(b.OnlineLED)
-	b.LEDOff(b.ParticipantsLED)
-	b.LEDOff(b.TransmitLED)
 
 	if reason == "" {
 		fmt.Printf("Connection to %s disconnected, attempting again in 10 seconds...\n", b.Address)
@@ -156,19 +149,15 @@ func (b *Talkiepi) ChangeChannel(ChannelName string) {
 	}
 }
 
-func (b *Talkiepi) ParticipantLEDUpdate() {
+func (b *Talkiepi) ParticipantUpdate() {
 	time.Sleep(100 * time.Millisecond)
-
-	// If we have more than just ourselves in the channel, turn on the participants LED, otherwise, turn it off
 
 	var participantCount = len(b.Client.Self.Channel.Users)
 
 	if participantCount > 1 {
 		fmt.Printf("Channel '%s' has %d participants\n", b.Client.Self.Channel.Name, participantCount)
-		b.LEDOn(b.ParticipantsLED)
 	} else {
 		fmt.Printf("Channel '%s' has no other participants\n", b.Client.Self.Channel.Name)
-		b.LEDOff(b.ParticipantsLED)
 	}
 }
 
@@ -210,7 +199,7 @@ func (b *Talkiepi) OnUserChange(e *gumble.UserChangeEvent) {
 
 	fmt.Printf("Change event for %s: %s (%d)\n", e.User.Name, info, e.Type)
 
-	go b.ParticipantLEDUpdate()
+	go b.ParticipantUpdate()
 }
 
 func (b *Talkiepi) OnPermissionDenied(e *gumble.PermissionDeniedEvent) {
@@ -242,7 +231,7 @@ func (b *Talkiepi) OnPermissionDenied(e *gumble.PermissionDeniedEvent) {
 }
 
 func (b *Talkiepi) OnChannelChange(e *gumble.ChannelChangeEvent) {
-	go b.ParticipantLEDUpdate()
+	go b.ParticipantUpdate()
 }
 
 func (b *Talkiepi) OnUserList(e *gumble.UserListEvent) {
